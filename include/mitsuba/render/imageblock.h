@@ -53,9 +53,14 @@ public:
      *    when \ref Bitmap::EMultiChannel is chosen as the pixel format
      * \param warn
      *    Warn when writing bad sample values?
-     */
+     * \param extraBorder
+	 *	 Optional extraBorder (used for gradient-domain algorithms to access neighboring pixels)
+	 */
     ImageBlock(Bitmap::EPixelFormat fmt, const Vector2i &size,
-            const ReconstructionFilter *filter = NULL, int channels = -1, bool warn = true);
+            const ReconstructionFilter *filter = NULL, int channels = -1, bool warn = true, int extraBorder = 0);
+
+    /// Set to allow the negative value
+    inline void setAllowNegativeValues(bool b) { m_allowNegative = b; }
 
     /// Set the current block offset
     inline void setOffset(const Point2i &offset) { m_offset = offset; }
@@ -146,7 +151,7 @@ public:
 
         /* Check if all sample values are valid */
         for (int i=0; i<channels; ++i) {
-            if (EXPECT_NOT_TAKEN((!std::isfinite(value[i]) || value[i] < 0) && m_warn))
+            if (EXPECT_NOT_TAKEN((!std::isfinite(value[i]) || ((!m_allowNegative && value[i] < 0))) && m_warn))
                 goto bad_sample;
         }
 
@@ -242,6 +247,7 @@ protected:
     const ReconstructionFilter *m_filter;
     Float *m_weightsX, *m_weightsY;
     bool m_warn;
+    bool m_allowNegative;
 };
 
 
